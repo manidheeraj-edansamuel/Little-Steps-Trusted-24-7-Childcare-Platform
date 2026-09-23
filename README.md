@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Little Steps — Trusted 24×7 Childcare Platform
 
-## Getting Started
+A full-stack web app connecting parents with verified childcare centers and
+caregivers. Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS ·
+Prisma · PostgreSQL**.
 
-First, run the development server:
+Phase 1 delivers the core booking flow end-to-end: role-based auth (parent /
+provider / admin), center search with filters, center detail pages, booking
+requests, provider accept/reject, and admin approvals.
+
+## Features
+
+- **Parents** — register, search & filter centers (24×7, age group, timing,
+  plan, max price), view center details and caregivers, book hourly/daily/monthly
+  slots, track and cancel bookings.
+- **Providers** — register (pending admin verification), create and list
+  centers, receive booking requests, accept/reject/complete them, view earnings.
+- **Admins** — approve/reject users and centers, monitor platform stats.
+
+## Setup
+
+### 1. Configure the database
+
+Make sure PostgreSQL is running, then create the database:
+
+```bash
+psql -U postgres -h localhost -c "CREATE DATABASE littlesteps;"
+```
+
+Copy `.env.example` to `.env` (already present) and set your real values:
+
+```
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/littlesteps?schema=public"
+AUTH_SECRET="<any long random string>"
+```
+
+### 2. Install, migrate, seed
+
+```bash
+npm install
+npm run db:migrate   # creates the schema (prisma migrate dev --name init)
+npm run db:seed      # loads demo users, centers, caregivers, bookings
+```
+
+### 3. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo accounts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All seeded accounts use the password `password123`:
 
-## Learn More
+| Role     | Email                     | Notes                    |
+| -------- | ------------------------- | ------------------------ |
+| Admin    | `admin@littlesteps.com`   | Full approval console    |
+| Provider | `provider@littlesteps.com`| Approved, owns 2 centers |
+| Provider | `pending@littlesteps.com` | Awaiting admin approval  |
+| Parent   | `parent@littlesteps.com`  | Has sample bookings      |
 
-To learn more about Next.js, take a look at the following resources:
+## Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+prisma/            schema.prisma + seed.ts
+src/lib/           prisma client, auth (JWT cookie), api guards
+src/components/    Nav, StatusBadge
+src/app/api/       REST route handlers (auth, centers, bookings, admin)
+src/app/           pages: landing, login, register, centers, dashboards
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Parents are auto-approved on signup; providers require admin verification
+  before their centers appear in search.
+- Session auth uses a signed JWT (`jose`) in an httpOnly cookie; passwords are
+  hashed with bcrypt.
+- Payments, live CCTV, and native mobile apps are out of scope (future phases).

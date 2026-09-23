@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PARENT
+  PROVIDER
+  ADMIN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AgeGroup {
+  INFANT
+  TODDLER
+  PRESCHOOL
+}
+
+enum PlanType {
+  HOURLY
+  DAILY
+  MONTHLY
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id        String         @id @default(cuid())
+  name      String
+  email     String         @unique
+  password  String
+  phone     String?
+  role      Role           @default(PARENT)
+  approved  ApprovalStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+
+  centers DaycareCenter[] @relation("ProviderCenters")
+  bookings Booking[]      @relation("ParentBookings")
+}
+
+model DaycareCenter {
+  id           String         @id @default(cuid())
+  name         String
+  description  String?
+  address      String
+  city         String
+  open24x7     Boolean        @default(false)
+  operatingHours String?
+  capacity     Int            @default(0)
+  ageGroups    AgeGroup[]
+  priceHourly  Int            @default(0)
+  priceDaily   Int            @default(0)
+  priceMonthly Int            @default(0)
+  photos       String[]
+  certifications String[]
+  safetyNotes  String?
+  approved     ApprovalStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+
+  providerId String
+  provider   User   @relation("ProviderCenters", fields: [providerId], references: [id], onDelete: Cascade)
+
+  caregivers Caregiver[]
+  bookings   Booking[]
+
+  @@index([city])
+  @@index([approved])
+}
+
+model Caregiver {
+  id              String   @id @default(cuid())
+  name            String
+  title           String?
+  bio             String?
+  experienceYears Int      @default(0)
+  verified        Boolean  @default(false)
+  certifications  String[]
+  photoUrl        String?
+
+  centerId String
+  center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  childName  String
+  ageGroup   AgeGroup
+  planType   PlanType
+  quantity   Int           @default(1)
+  startDate  DateTime
+  endDate    DateTime?
+  totalPrice Int           @default(0)
+  status     BookingStatus @default(PENDING)
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  parentId String
+  parent   User   @relation("ParentBookings", fields: [parentId], references: [id], onDelete: Cascade)
+
+  centerId String
+  center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([parentId])
+  @@index([centerId])
+}
