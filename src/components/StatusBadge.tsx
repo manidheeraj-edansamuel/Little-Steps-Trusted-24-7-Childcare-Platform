@@ -3,6 +3,8 @@ const STYLES: Record<string, string> = {
   APPROVED: "bg-emerald-100 text-emerald-700",
   CONFIRMED: "bg-emerald-100 text-emerald-700",
   COMPLETED: "bg-sky-100 text-sky-700",
+  ACTIVE: "bg-emerald-100 text-emerald-700",
+  PAUSED: "bg-amber-100 text-amber-700",
   REJECTED: "bg-rose-100 text-rose-700",
   CANCELLED: "bg-slate-200 text-slate-600",
 };

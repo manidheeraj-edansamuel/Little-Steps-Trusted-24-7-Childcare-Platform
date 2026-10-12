@@ -58,6 +58,10 @@ export default function CenterDetailPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const [recurringPlan, setRecurringPlan] = useState<"MONTHLY" | "DAILY">("MONTHLY");
+  const [subMsg, setSubMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [subBusy, setSubBusy] = useState(false);
+
   useEffect(() => {
     fetch(`/api/centers/${id}`)
       .then(async (r) => {
@@ -103,6 +107,38 @@ export default function CenterDetailPage() {
       text: "Booking request sent! The center will confirm shortly. Track it in your dashboard.",
     });
     setForm((f) => ({ ...f, childName: "", notes: "" }));
+  }
+
+  async function subscribe(e: React.FormEvent) {
+    e.preventDefault();
+    setSubMsg(null);
+    if (!form.childName.trim()) {
+      setSubMsg({ type: "err", text: "Enter the child's name in the booking form above first." });
+      return;
+    }
+    setSubBusy(true);
+    const res = await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        centerId: id,
+        childName: form.childName,
+        ageGroup: form.ageGroup,
+        planType: recurringPlan,
+        startDate: form.startDate,
+      }),
+    });
+    const data = await res.json();
+    setSubBusy(false);
+    if (res.status === 401) {
+      router.push(`/login`);
+      return;
+    }
+    if (!res.ok) return setSubMsg({ type: "err", text: data.error ?? "Could not subscribe" });
+    setSubMsg({
+      type: "ok",
+      text: "Subscription active! Manage pause/cancel anytime from your dashboard.",
+    });
   }
 
   if (loading) return <p className="text-slate-500">Loading…</p>;
@@ -356,6 +392,59 @@ export default function CenterDetailPage() {
               className="w-full rounded-lg bg-rose-500 px-4 py-2.5 font-medium text-white hover:bg-rose-600 disabled:opacity-60"
             >
               {busy ? "Sending…" : "Send booking request"}
+            </button>
+          </form>
+
+          <form
+            onSubmit={subscribe}
+            className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          >
+            <h2 className="text-lg font-semibold text-slate-900">Recurring care</h2>
+            <p className="text-sm text-slate-500">
+              Subscribe for ongoing care. Uses the child's name, age group and
+              start date from the booking form above.
+            </p>
+
+            {subMsg && (
+              <div
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  subMsg.type === "ok"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-rose-50 text-rose-700"
+                }`}
+              >
+                {subMsg.text}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+              {(["MONTHLY", "DAILY"] as const).map((p) => (
+                <button
+                  type="button"
+                  key={p}
+                  onClick={() => setRecurringPlan(p)}
+                  className={`rounded-xl border p-3 text-left ${
+                    recurringPlan === p
+                      ? "border-rose-500 bg-rose-50"
+                      : "border-slate-200"
+                  }`}
+                >
+                  <div className="text-sm font-medium text-slate-900">
+                    {p === "MONTHLY" ? "Monthly" : "Daily"}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    ₹{p === "MONTHLY" ? center.priceMonthly : center.priceDaily} /{" "}
+                    {p === "MONTHLY" ? "mo" : "day"}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              disabled={subBusy}
+              className="w-full rounded-lg border border-rose-500 px-4 py-2.5 font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-60"
+            >
+              {subBusy ? "Subscribing…" : "Start subscription"}
             </button>
           </form>
         </div>

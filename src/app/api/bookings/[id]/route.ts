@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notify";
 import { Role, BookingStatus } from "@prisma/client";
 import { requireRole, jsonError } from "@/lib/api";
 
@@ -50,6 +51,13 @@ export async function PATCH(
       center: { select: { id: true, name: true, city: true } },
     },
   });
+
+  await notify(
+    updated.parentId,
+    "BOOKING_UPDATED",
+    `Booking ${status.toLowerCase()}`,
+    `Your booking for ${updated.childName} at ${updated.center.name} is now ${status.toLowerCase()}.`
+  );
 
   return NextResponse.json({ booking: updated });
 }

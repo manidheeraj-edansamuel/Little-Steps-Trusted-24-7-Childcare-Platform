@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ApprovalStatus, AgeGroup, PlanType, BookingStatus } from "@prisma/client";
+import { PrismaClient, Role, ApprovalStatus, AgeGroup, PlanType, BookingStatus, SubscriptionStatus, NotificationType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -9,6 +9,8 @@ async function main() {
   const password = await bcrypt.hash("password123", 10);
 
   // Wipe in dependency order.
+  await prisma.notification.deleteMany();
+  await prisma.subscription.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.caregiver.deleteMany();
   await prisma.daycareCenter.deleteMany();
@@ -175,6 +177,64 @@ async function main() {
         startDate: new Date(),
         totalPrice: 14000,
         status: BookingStatus.CONFIRMED,
+      },
+    ],
+  });
+
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const sub1 = await prisma.subscription.create({
+    data: {
+      parentId: parent.id,
+      centerId: center1.id,
+      childName: "Aarav Sharma",
+      ageGroup: AgeGroup.TODDLER,
+      planType: PlanType.MONTHLY,
+      pricePerPeriod: center1.priceMonthly,
+      status: SubscriptionStatus.ACTIVE,
+      startDate: new Date(),
+      nextBillingDate: nextMonth,
+    },
+  });
+  void sub1;
+
+  await prisma.subscription.create({
+    data: {
+      parentId: parent.id,
+      centerId: center2.id,
+      childName: "Aarav Sharma",
+      ageGroup: AgeGroup.INFANT,
+      planType: PlanType.DAILY,
+      pricePerPeriod: center2.priceDaily,
+      status: SubscriptionStatus.PAUSED,
+      startDate: new Date(),
+      nextBillingDate: tomorrow,
+    },
+  });
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: providerA.id,
+        type: NotificationType.SUBSCRIPTION_CREATED,
+        title: "New subscription",
+        body: `Priya Sharma subscribed Aarav Sharma to ${center1.name} (monthly).`,
+      },
+      {
+        userId: parent.id,
+        type: NotificationType.BOOKING_UPDATED,
+        title: "Booking confirmed",
+        body: `Your booking at ${center2.name} was confirmed.`,
+      },
+      {
+        userId: parent.id,
+        type: NotificationType.BOOKING_CREATED,
+        title: "Booking request sent",
+        body: `Your booking request at ${center1.name} is pending confirmation.`,
+        read: true,
       },
     ],
   });

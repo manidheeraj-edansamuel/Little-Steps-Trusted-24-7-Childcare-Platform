@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notify";
 import { Role, PlanType, AgeGroup, ApprovalStatus, BookingStatus } from "@prisma/client";
 import { requireRole, jsonError } from "@/lib/api";
 
@@ -45,6 +46,13 @@ export async function POST(req: Request) {
     },
     include: { center: { select: { id: true, name: true, city: true } } },
   });
+
+  await notify(
+    center.providerId,
+    "BOOKING_CREATED",
+    "New booking request",
+    `${auth.session.name} requested a ${booking.planType.toLowerCase()} slot for ${booking.childName} at ${center.name}.`
+  );
 
   return NextResponse.json({ booking }, { status: 201 });
 }

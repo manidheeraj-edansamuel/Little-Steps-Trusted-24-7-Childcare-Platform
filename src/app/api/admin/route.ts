@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notify";
 import { Role, ApprovalStatus } from "@prisma/client";
 import { requireRole, jsonError } from "@/lib/api";
 
@@ -59,6 +60,14 @@ export async function PATCH(req: Request) {
       data: { approved: status as ApprovalStatus },
       select: { id: true, name: true, approved: true },
     });
+    await notify(
+      user.id,
+      status === ApprovalStatus.APPROVED
+        ? "ACCOUNT_APPROVED"
+        : "ACCOUNT_REJECTED",
+      `Account ${status.toLowerCase()}`,
+      `Your Little Steps account has been ${status.toLowerCase()} by an administrator.`
+    );
     return NextResponse.json({ user });
   }
 
@@ -66,8 +75,16 @@ export async function PATCH(req: Request) {
     const center = await prisma.daycareCenter.update({
       where: { id: centerId },
       data: { approved: status as ApprovalStatus },
-      select: { id: true, name: true, approved: true },
+      select: { id: true, name: true, approved: true, providerId: true },
     });
+    await notify(
+      center.providerId,
+      status === ApprovalStatus.APPROVED
+        ? "CENTER_APPROVED"
+        : "CENTER_REJECTED",
+      `Center ${status.toLowerCase()}`,
+      `Your center "${center.name}" has been ${status.toLowerCase()} by an administrator.`
+    );
     return NextResponse.json({ center });
   }
 

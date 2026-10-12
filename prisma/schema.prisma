@@ -39,6 +39,24 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum NotificationType {
+  BOOKING_CREATED
+  BOOKING_UPDATED
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_UPDATED
+  SUBSCRIPTION_CANCELLED
+  ACCOUNT_APPROVED
+  ACCOUNT_REJECTED
+  CENTER_APPROVED
+  CENTER_REJECTED
+}
+
 model User {
   id        String         @id @default(cuid())
   name      String
@@ -49,8 +67,10 @@ model User {
   approved  ApprovalStatus @default(PENDING)
   createdAt DateTime       @default(now())
 
-  centers DaycareCenter[] @relation("ProviderCenters")
-  bookings Booking[]      @relation("ParentBookings")
+  centers       DaycareCenter[] @relation("ProviderCenters")
+  bookings      Booking[]       @relation("ParentBookings")
+  subscriptions Subscription[]  @relation("ParentSubscriptions")
+  notifications Notification[]
 }
 
 model DaycareCenter {
@@ -75,8 +95,9 @@ model DaycareCenter {
   providerId String
   provider   User   @relation("ProviderCenters", fields: [providerId], references: [id], onDelete: Cascade)
 
-  caregivers Caregiver[]
-  bookings   Booking[]
+  caregivers    Caregiver[]
+  bookings      Booking[]
+  subscriptions Subscription[]
 
   @@index([city])
   @@index([approved])
@@ -119,4 +140,42 @@ model Booking {
   @@index([status])
   @@index([parentId])
   @@index([centerId])
+}
+
+model Subscription {
+  id              String             @id @default(cuid())
+  childName       String
+  ageGroup        AgeGroup
+  planType        PlanType           @default(MONTHLY)
+  pricePerPeriod  Int                @default(0)
+  status          SubscriptionStatus @default(ACTIVE)
+  startDate       DateTime           @default(now())
+  nextBillingDate DateTime
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  parentId String
+  parent   User   @relation("ParentSubscriptions", fields: [parentId], references: [id], onDelete: Cascade)
+
+  centerId String
+  center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([parentId])
+  @@index([centerId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
 }

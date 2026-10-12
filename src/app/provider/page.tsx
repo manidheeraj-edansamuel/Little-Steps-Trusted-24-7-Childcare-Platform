@@ -30,6 +30,19 @@ type Center = {
   _count: { bookings: number };
 };
 
+type Subscription = {
+  id: string;
+  childName: string;
+  ageGroup: string;
+  planType: string;
+  pricePerPeriod: number;
+  status: string;
+  startDate: string;
+  nextBillingDate: string;
+  parent: { id: string; name: string; email: string };
+  center: { id: string; name: string; city: string };
+};
+
 const emptyCenter = {
   name: "",
   description: "",
@@ -47,27 +60,31 @@ const emptyCenter = {
 };
 
 export default function ProviderDashboard() {
-  const [tab, setTab] = useState<"bookings" | "centers">("bookings");
+  const [tab, setTab] = useState<"bookings" | "centers" | "subscriptions">("bookings");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
+  const [subs, setSubs] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyCenter);
   const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
-    const [bRes, cRes] = await Promise.all([
+    const [bRes, cRes, sRes] = await Promise.all([
       fetch("/api/bookings"),
       fetch("/api/centers?mine=true"),
+      fetch("/api/subscriptions"),
     ]);
-    if (bRes.status === 401 || cRes.status === 401) {
+    if (bRes.status === 401 || cRes.status === 401 || sRes.status === 401) {
       window.location.href = "/login";
       return;
     }
     const bData = await bRes.json();
     const cData = await cRes.json();
+    const sData = await sRes.json();
     setBookings(bData.bookings ?? []);
     setCenters(cData.centers ?? []);
+    setSubs(sData.subscriptions ?? []);
     setLoading(false);
   }, []);
 
@@ -80,6 +97,15 @@ export default function ProviderDashboard() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
+    });
+    load();
+  }
+
+  async function cancelSub(id: string) {
+    await fetch(`/api/subscriptions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "CANCELLED" }),
     });
     load();
   }
@@ -120,6 +146,10 @@ export default function ProviderDashboard() {
   const earnings = bookings
     .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
     .reduce((sum, b) => sum + b.totalPrice, 0);
+  const activeSubs = subs.filter((s) => s.status === "ACTIVE");
+  const monthlyRecurring = activeSubs
+    .filter((s) => s.planType === "MONTHLY")
+    .reduce((sum, s) => sum + s.pricePerPeriod, 0);
 
   if (loading) return <p className="text-slate-500">Loading…</p>;
 
@@ -132,10 +162,11 @@ export default function ProviderDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Pending requests" value={String(pending.length)} />
         <Stat label="Total bookings" value={String(bookings.length)} />
         <Stat label="Earnings" value={`₹${earnings}`} />
+        <Stat label="Monthly recurring" value={`₹${monthlyRecurring}`} />
       </div>
 
       <div className="flex gap-2 border-b border-slate-200">
@@ -144,6 +175,12 @@ export default function ProviderDashboard() {
         </TabButton>
         <TabButton active={tab === "centers"} onClick={() => setTab("centers")}>
           My centers ({centers.length})
+        </TabButton>
+        <TabButton
+          active={tab === "subscriptions"}
+          onClick={() => setTab("subscriptions")}
+        >
+          Subscriptions ({subs.length})
         </TabButton>
       </div>
 
@@ -215,7 +252,7 @@ export default function ProviderDashboard() {
             ))}
           </div>
         )
-      ) : (
+      ) : tab === "centers" ? (
         <div className="space-y-4">
           <button
             onClick={() => setShowForm((s) => !s)}
@@ -410,6 +447,53 @@ export default function ProviderDashboard() {
               ))}
             </div>
           )}
+        </div>
+      ) : subs.length === 0 ? (
+        <Empty text="No subscriptions yet." />
+      ) : (
+        <div className="space-y-3">
+          {subs.map((s) => (
+            <div
+              key={s.id}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {s.childName}{" "}
+                    <span className="font-normal text-slate-500">
+                      ({s.ageGroup.toLowerCase()})
+                    </span>
+                  </p>
+                  <Link
+                    href={`/centers/${s.center.id}`}
+                    className="text-sm text-rose-600 hover:underline"
+                  >
+                    {s.center.name}
+                  </Link>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Parent: {s.parent.name} · {s.parent.email}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {s.planType.toLowerCase()} · ₹{s.pricePerPeriod} /{" "}
+                    {s.planType === "MONTHLY" ? "mo" : "day"} · next billing{" "}
+                    {new Date(s.nextBillingDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <StatusBadge status={s.status} />
+                  {s.status !== "CANCELLED" && (
+                    <button
+                      onClick={() => cancelSub(s.id)}
+                      className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
