@@ -58,6 +58,12 @@ enum PaymentMethod {
   NET_BANKING
 }
 
+enum CameraStreamType {
+  HLS
+  MP4
+  IFRAME
+}
+
 enum NotificationType {
   BOOKING_CREATED
   BOOKING_UPDATED
@@ -115,6 +121,7 @@ model DaycareCenter {
   caregivers    Caregiver[]
   bookings      Booking[]
   subscriptions Subscription[]
+  cameras       CctvCamera[]
 
   @@index([city])
   @@index([approved])
@@ -224,4 +231,19 @@ model Payment {
   @@index([parentId])
   @@index([bookingId])
   @@index([subscriptionId])
+}
+
+model CctvCamera {
+  id        String            @id @default(cuid())
+  name      String
+  location  String?
+  streamUrl String
+  type      CameraStreamType  @default(HLS)
+  active    Boolean           @default(true)
+  createdAt DateTime          @default(now())
+
+  centerId String
+  center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
 }

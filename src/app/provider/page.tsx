@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
+import CenterCameras from "@/components/CenterCameras";
 
 type Booking = {
   id: string;
@@ -475,6 +476,15 @@ export default function ProviderDashboard() {
               ))}
             </div>
           )}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="font-semibold text-slate-900">CCTV cameras</h2>
+            <div className="mt-3">
+              <CenterCameras
+                centers={centers.map((c) => ({ id: c.id, name: c.name }))}
+              />
+            </div>
+          </div>
         </div>
       ) : tab === "subscriptions" ? (
         subs.length === 0 ? (

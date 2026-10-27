@@ -70,6 +70,14 @@ export default function Nav() {
               >
                 Dashboard
               </Link>
+              {user?.role === "PARENT" && (
+                <Link
+                  href="/live"
+                  className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100"
+                >
+                  Live view
+                </Link>
+              )}
               <Link
                 href="/notifications"
                 className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"

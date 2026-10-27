@@ -17,6 +17,10 @@ const features = [
     title: "Real-time booking",
     body: "Send a booking request and get confirmation from the center — no overbooking.",
   },
+  {
+    title: "Live CCTV viewing",
+    body: "Watch your child's play area any time while your booking or subscription is active.",
+  },
 ];
 
 export default function Home() {

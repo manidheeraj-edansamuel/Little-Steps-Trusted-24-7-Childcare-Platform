@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ApprovalStatus, AgeGroup, PlanType, BookingStatus, SubscriptionStatus, NotificationType, PaymentStatus, PaymentMethod } from "@prisma/client";
+import { PrismaClient, Role, ApprovalStatus, AgeGroup, PlanType, BookingStatus, SubscriptionStatus, NotificationType, PaymentStatus, PaymentMethod, CameraStreamType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -9,6 +9,7 @@ async function main() {
   const password = await bcrypt.hash("password123", 10);
 
   // Wipe in dependency order.
+  await prisma.cctvCamera.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.subscription.deleteMany();
@@ -149,6 +150,43 @@ async function main() {
         experienceYears: 3,
         verified: true,
         certifications: ["Preschool Teaching"],
+        centerId: center2.id,
+      },
+    ],
+  });
+
+  // Public test streams stand in for real NVR feeds so the player is demoable.
+  await prisma.cctvCamera.createMany({
+    data: [
+      {
+        name: "Play area",
+        location: "Ground floor, supervised outdoor play",
+        streamUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+        type: CameraStreamType.HLS,
+        centerId: center1.id,
+      },
+      {
+        name: "Nap room",
+        location: "First floor",
+        streamUrl:
+          "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4",
+        type: CameraStreamType.MP4,
+        centerId: center1.id,
+      },
+      {
+        name: "Main gate",
+        location: "Biometric entry",
+        streamUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+        type: CameraStreamType.HLS,
+        active: false,
+        centerId: center1.id,
+      },
+      {
+        name: "Activity room",
+        location: "Toddler bay",
+        streamUrl:
+          "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8",
+        type: CameraStreamType.HLS,
         centerId: center2.id,
       },
     ],
