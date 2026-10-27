@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import CenterReviews from "@/components/CenterReviews";
 
 type Caregiver = {
   id: string;
@@ -278,6 +279,8 @@ export default function CenterDetailPage() {
               </div>
             )}
           </div>
+
+          <CenterReviews centerId={id} />
         </div>
 
         <div className="lg:col-span-1">

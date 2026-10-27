@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
+import Recommendations from "@/components/Recommendations";
 
 type Booking = {
   id: string;
@@ -151,6 +152,8 @@ export default function ParentDashboard() {
           Book childcare
         </Link>
       </div>
+
+      <Recommendations />
 
       {loading ? (
         <p className="text-slate-500">Loading…</p>

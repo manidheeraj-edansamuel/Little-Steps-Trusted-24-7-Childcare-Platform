@@ -93,6 +93,7 @@ model User {
   bookings      Booking[]       @relation("ParentBookings")
   subscriptions Subscription[]  @relation("ParentSubscriptions")
   payments      Payment[]       @relation("ParentPayments")
+  reviews       CenterReview[]  @relation("ParentReviews")
   notifications Notification[]
 }
 
@@ -122,6 +123,7 @@ model DaycareCenter {
   bookings      Booking[]
   subscriptions Subscription[]
   cameras       CctvCamera[]
+  reviews       CenterReview[]
 
   @@index([city])
   @@index([approved])
@@ -135,6 +137,7 @@ model Caregiver {
   experienceYears Int      @default(0)
   verified        Boolean  @default(false)
   certifications  String[]
+  specialities    AgeGroup[] @default([])
   photoUrl        String?
 
   centerId String
@@ -245,5 +248,21 @@ model CctvCamera {
   centerId String
   center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
 
+  @@index([centerId])
+}
+
+model CenterReview {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  parentId String
+  parent   User   @relation("ParentReviews", fields: [parentId], references: [id], onDelete: Cascade)
+
+  centerId String
+  center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, centerId])
   @@index([centerId])
 }

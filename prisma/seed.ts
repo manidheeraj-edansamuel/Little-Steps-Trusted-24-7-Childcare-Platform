@@ -9,6 +9,7 @@ async function main() {
   const password = await bcrypt.hash("password123", 10);
 
   // Wipe in dependency order.
+  await prisma.centerReview.deleteMany();
   await prisma.cctvCamera.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.notification.deleteMany();
@@ -132,6 +133,7 @@ async function main() {
         experienceYears: 8,
         verified: true,
         certifications: ["Child First Aid", "ECE Diploma"],
+        specialities: [AgeGroup.INFANT],
         centerId: center1.id,
       },
       {
@@ -141,6 +143,7 @@ async function main() {
         experienceYears: 5,
         verified: true,
         certifications: ["Child First Aid"],
+        specialities: [AgeGroup.TODDLER, AgeGroup.PRESCHOOL],
         centerId: center1.id,
       },
       {
@@ -150,6 +153,7 @@ async function main() {
         experienceYears: 3,
         verified: true,
         certifications: ["Preschool Teaching"],
+        specialities: [AgeGroup.TODDLER],
         centerId: center2.id,
       },
     ],
@@ -310,6 +314,170 @@ async function main() {
         txnRef: "TXN-SEED-FAIL-001",
         subscriptionId: sub1.id,
       },
+    ],
+  });
+
+  // Extra approved centers so the recommender has candidates to rank.
+  const center4 = await prisma.daycareCenter.create({
+    data: {
+      name: "Little Stars Preschool & Daycare",
+      description:
+        "Play-focused preschool in Andheri with a strong nap-and-meals routine and open CCTV access for parents.",
+      address: "9 Linking Road, Bandra",
+      city: "Mumbai",
+      open24x7: true,
+      operatingHours: "Open 24 hours",
+      capacity: 30,
+      ageGroups: [AgeGroup.INFANT, AgeGroup.TODDLER, AgeGroup.PRESCHOOL],
+      priceHourly: 140,
+      priceDaily: 820,
+      priceMonthly: 16500,
+      certifications: ["ISO 9001", "CCTV Monitored"],
+      approved: ApprovalStatus.APPROVED,
+      providerId: providerA.id,
+    },
+  });
+
+  const center5 = await prisma.daycareCenter.create({
+    data: {
+      name: "Sunbeam Kids Hub",
+      description:
+        "Neighbourhood daycare in HSR Layout for toddlers and preschoolers, with qualified early-years staff.",
+      address: "22 27th Main, HSR Layout",
+      city: "Bengaluru",
+      operatingHours: "6:30 AM – 8:30 PM",
+      capacity: 18,
+      ageGroups: [AgeGroup.TODDLER, AgeGroup.PRESCHOOL],
+      priceHourly: 110,
+      priceDaily: 640,
+      priceMonthly: 12500,
+      certifications: ["Fire Safety", "Child First Aid"],
+      approved: ApprovalStatus.APPROVED,
+      providerId: providerA.id,
+    },
+  });
+
+  await prisma.caregiver.createMany({
+    data: [
+      {
+        name: "Vikram Nair",
+        title: "Early Years Lead",
+        bio: "Builds daily learning plans for preschool groups.",
+        experienceYears: 10,
+        verified: true,
+        certifications: ["ECE Diploma", "Child First Aid"],
+        specialities: [AgeGroup.PRESCHOOL, AgeGroup.TODDLER],
+        centerId: center4.id,
+      },
+      {
+        name: "Sneha Rao",
+        title: "Caregiver",
+        bio: "Newborn and infant sleep routines.",
+        experienceYears: 4,
+        verified: false,
+        certifications: ["Infant CPR"],
+        specialities: [AgeGroup.INFANT],
+        centerId: center5.id,
+      },
+    ],
+  });
+
+  // Two more parents give the collaborative-filtering signal something to work with.
+  const parent2 = await prisma.user.create({
+    data: {
+      name: "Kavya Iyer",
+      email: "kavya@littlesteps.com",
+      password,
+      role: Role.PARENT,
+      approved: ApprovalStatus.APPROVED,
+    },
+  });
+
+  const parent3 = await prisma.user.create({
+    data: {
+      name: "Rohit Mehta",
+      email: "rohit@littlesteps.com",
+      password,
+      role: Role.PARENT,
+      approved: ApprovalStatus.APPROVED,
+    },
+  });
+
+  await prisma.booking.createMany({
+    data: [
+      {
+        parentId: parent2.id,
+        centerId: center1.id,
+        childName: "Riya Iyer",
+        ageGroup: AgeGroup.TODDLER,
+        planType: PlanType.DAILY,
+        quantity: 10,
+        startDate: new Date(),
+        totalPrice: 900 * 10,
+        status: BookingStatus.CONFIRMED,
+      },
+      {
+        parentId: parent2.id,
+        centerId: center4.id,
+        childName: "Riya Iyer",
+        ageGroup: AgeGroup.TODDLER,
+        planType: PlanType.MONTHLY,
+        quantity: 1,
+        startDate: new Date(),
+        totalPrice: center4.priceMonthly,
+        status: BookingStatus.COMPLETED,
+      },
+      {
+        parentId: parent3.id,
+        centerId: center2.id,
+        childName: "Vihaan Mehta",
+        ageGroup: AgeGroup.INFANT,
+        planType: PlanType.DAILY,
+        quantity: 4,
+        startDate: new Date(),
+        totalPrice: center2.priceDaily * 4,
+        status: BookingStatus.CONFIRMED,
+      },
+      {
+        parentId: parent3.id,
+        centerId: center3.id,
+        childName: "Vihaan Mehta",
+        ageGroup: AgeGroup.TODDLER,
+        planType: PlanType.DAILY,
+        quantity: 2,
+        startDate: new Date(),
+        totalPrice: center3.priceDaily * 2,
+        status: BookingStatus.CONFIRMED,
+      },
+    ],
+  });
+
+  await prisma.subscription.create({
+    data: {
+      parentId: parent2.id,
+      centerId: center4.id,
+      childName: "Riya Iyer",
+      ageGroup: AgeGroup.TODDLER,
+      planType: PlanType.MONTHLY,
+      pricePerPeriod: center4.priceMonthly,
+      status: SubscriptionStatus.ACTIVE,
+      startDate: new Date(),
+      nextBillingDate: nextMonth,
+    },
+  });
+
+  await prisma.centerReview.createMany({
+    data: [
+      {
+        parentId: parent2.id,
+        centerId: center1.id,
+        rating: 5,
+        comment: "Night shifts and the live feeds genuinely saved us during rotations.",
+      },
+      { parentId: parent2.id, centerId: center4.id, rating: 4, comment: "Great routine, food could be better." },
+      { parentId: parent3.id, centerId: center2.id, rating: 4, comment: "Calm staff, quick responses." },
+      { parentId: parent.id, centerId: center2.id, rating: 5, comment: "Aarav loves the nap room." },
+      { parentId: parent3.id, centerId: center3.id, rating: 3 },
     ],
   });
 
