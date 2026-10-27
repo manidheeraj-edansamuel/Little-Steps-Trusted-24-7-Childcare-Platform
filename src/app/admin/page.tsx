@@ -32,6 +32,7 @@ type Stats = {
   totalCenters: number;
   pendingCenters: number;
   totalBookings: number;
+  totalCollected: number;
 };
 
 export default function AdminPage() {
@@ -94,11 +95,12 @@ export default function AdminPage() {
       </div>
 
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Stat label="Users" value={stats.totalUsers} sub={`${stats.totalParents} parents · ${stats.totalProviders} providers`} />
           <Stat label="Pending providers" value={stats.pendingProviders} />
           <Stat label="Centers" value={stats.totalCenters} sub={`${stats.pendingCenters} pending`} />
           <Stat label="Bookings" value={stats.totalBookings} />
+          <Stat label="Collected" value={`₹${stats.totalCollected}`} sub="successful payments" />
         </div>
       )}
 
@@ -210,7 +212,7 @@ function Stat({
   sub,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   sub?: string;
 }) {
   return (

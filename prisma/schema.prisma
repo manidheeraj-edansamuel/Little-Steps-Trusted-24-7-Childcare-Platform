@@ -45,6 +45,19 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  UPI
+  NET_BANKING
+}
+
 enum NotificationType {
   BOOKING_CREATED
   BOOKING_UPDATED
@@ -55,6 +68,9 @@ enum NotificationType {
   ACCOUNT_REJECTED
   CENTER_APPROVED
   CENTER_REJECTED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
 }
 
 model User {
@@ -70,6 +86,7 @@ model User {
   centers       DaycareCenter[] @relation("ProviderCenters")
   bookings      Booking[]       @relation("ParentBookings")
   subscriptions Subscription[]  @relation("ParentSubscriptions")
+  payments      Payment[]       @relation("ParentPayments")
   notifications Notification[]
 }
 
@@ -137,6 +154,8 @@ model Booking {
   centerId String
   center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
 
+  payments Payment[]
+
   @@index([status])
   @@index([parentId])
   @@index([centerId])
@@ -161,6 +180,8 @@ model Subscription {
   centerId String
   center   DaycareCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
 
+  payments Payment[]
+
   @@index([status])
   @@index([parentId])
   @@index([centerId])
@@ -178,4 +199,29 @@ model Notification {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  amount      Int
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  txnRef      String        @unique
+  periodStart DateTime?
+  periodEnd   DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  parentId String
+  parent   User   @relation("ParentPayments", fields: [parentId], references: [id], onDelete: Cascade)
+
+  bookingId      String?
+  booking        Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([parentId])
+  @@index([bookingId])
+  @@index([subscriptionId])
 }

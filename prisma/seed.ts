@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ApprovalStatus, AgeGroup, PlanType, BookingStatus, SubscriptionStatus, NotificationType } from "@prisma/client";
+import { PrismaClient, Role, ApprovalStatus, AgeGroup, PlanType, BookingStatus, SubscriptionStatus, NotificationType, PaymentStatus, PaymentMethod } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -9,6 +9,7 @@ async function main() {
   const password = await bcrypt.hash("password123", 10);
 
   // Wipe in dependency order.
+  await prisma.payment.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.subscription.deleteMany();
   await prisma.booking.deleteMany();
@@ -153,33 +154,35 @@ async function main() {
     ],
   });
 
-  await prisma.booking.createMany({
-    data: [
-      {
-        parentId: parent.id,
-        centerId: center1.id,
-        childName: "Aarav Sharma",
-        ageGroup: AgeGroup.TODDLER,
-        planType: PlanType.DAILY,
-        quantity: 5,
-        startDate: new Date(),
-        totalPrice: 900 * 5,
-        status: BookingStatus.PENDING,
-        notes: "Needs evening pickup around 8 PM.",
-      },
-      {
-        parentId: parent.id,
-        centerId: center2.id,
-        childName: "Aarav Sharma",
-        ageGroup: AgeGroup.INFANT,
-        planType: PlanType.MONTHLY,
-        quantity: 1,
-        startDate: new Date(),
-        totalPrice: 14000,
-        status: BookingStatus.CONFIRMED,
-      },
-    ],
+  const bookingPending = await prisma.booking.create({
+    data: {
+      parentId: parent.id,
+      centerId: center1.id,
+      childName: "Aarav Sharma",
+      ageGroup: AgeGroup.TODDLER,
+      planType: PlanType.DAILY,
+      quantity: 5,
+      startDate: new Date(),
+      totalPrice: 900 * 5,
+      status: BookingStatus.PENDING,
+      notes: "Needs evening pickup around 8 PM.",
+    },
   });
+
+  const bookingConfirmed = await prisma.booking.create({
+    data: {
+      parentId: parent.id,
+      centerId: center2.id,
+      childName: "Aarav Sharma",
+      ageGroup: AgeGroup.INFANT,
+      planType: PlanType.MONTHLY,
+      quantity: 1,
+      startDate: new Date(),
+      totalPrice: 14000,
+      status: BookingStatus.CONFIRMED,
+    },
+  });
+  void bookingPending;
 
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -235,6 +238,39 @@ async function main() {
         title: "Booking request sent",
         body: `Your booking request at ${center1.name} is pending confirmation.`,
         read: true,
+      },
+    ],
+  });
+
+  await prisma.payment.createMany({
+    data: [
+      {
+        parentId: parent.id,
+        amount: bookingConfirmed.totalPrice,
+        method: PaymentMethod.CARD,
+        status: PaymentStatus.SUCCESS,
+        txnRef: "TXN-SEED-BOOKING-001",
+        bookingId: bookingConfirmed.id,
+        paidAt: new Date(),
+      },
+      {
+        parentId: parent.id,
+        amount: sub1.pricePerPeriod,
+        method: PaymentMethod.UPI,
+        status: PaymentStatus.SUCCESS,
+        txnRef: "TXN-SEED-SUB-001",
+        subscriptionId: sub1.id,
+        periodStart: sub1.startDate,
+        periodEnd: sub1.nextBillingDate,
+        paidAt: new Date(),
+      },
+      {
+        parentId: parent.id,
+        amount: 900,
+        method: PaymentMethod.NET_BANKING,
+        status: PaymentStatus.FAILED,
+        txnRef: "TXN-SEED-FAIL-001",
+        subscriptionId: sub1.id,
       },
     ],
   });

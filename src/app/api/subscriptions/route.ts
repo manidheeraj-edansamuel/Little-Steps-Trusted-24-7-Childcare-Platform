@@ -3,13 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notify";
 import { Role, PlanType, AgeGroup, ApprovalStatus, SubscriptionStatus } from "@prisma/client";
 import { requireRole, jsonError } from "@/lib/api";
-
-function addPeriod(date: Date, planType: PlanType): Date {
-  const d = new Date(date);
-  if (planType === PlanType.MONTHLY) d.setMonth(d.getMonth() + 1);
-  else d.setDate(d.getDate() + 1);
-  return d;
-}
+import { addPeriod } from "@/lib/billing";
 
 export async function POST(req: Request) {
   const auth = await requireRole(Role.PARENT);

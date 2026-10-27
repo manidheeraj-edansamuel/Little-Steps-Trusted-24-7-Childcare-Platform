@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notify";
-import { Role, ApprovalStatus } from "@prisma/client";
+import { Role, ApprovalStatus, PaymentStatus } from "@prisma/client";
 import { requireRole, jsonError } from "@/lib/api";
 
 export async function GET() {
   const auth = await requireRole(Role.ADMIN);
   if (!auth.ok) return auth.response;
 
-  const [users, centers, bookings] = await Promise.all([
+  const [users, centers, bookings, successAgg, refundedAgg] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -27,7 +27,18 @@ export async function GET() {
       include: { provider: { select: { id: true, name: true, email: true } } },
     }),
     prisma.booking.count(),
+    prisma.payment.aggregate({
+      where: { status: PaymentStatus.SUCCESS },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: { status: PaymentStatus.REFUNDED },
+      _sum: { amount: true },
+    }),
   ]);
+
+  const collected =
+    (successAgg._sum.amount ?? 0) - (refundedAgg._sum.amount ?? 0);
 
   const stats = {
     totalUsers: users.length,
@@ -41,6 +52,7 @@ export async function GET() {
       (c) => c.approved === ApprovalStatus.PENDING
     ).length,
     totalBookings: bookings,
+    totalCollected: collected,
   };
 
   return NextResponse.json({ users, centers, stats });
