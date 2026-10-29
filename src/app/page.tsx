@@ -73,7 +73,7 @@ export default function Home() {
 
       <section>
         <h2 className="text-2xl font-bold text-slate-900">Why parents choose Little Steps</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
             <div
               key={f.title}

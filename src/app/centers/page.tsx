@@ -73,7 +73,7 @@ export default function CentersPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="text-xs font-medium text-slate-600">Search</label>
             <input
@@ -167,7 +167,7 @@ export default function CentersPage() {
           No centers match your filters.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {centers.map((c) => (
             <Link
               key={c.id}

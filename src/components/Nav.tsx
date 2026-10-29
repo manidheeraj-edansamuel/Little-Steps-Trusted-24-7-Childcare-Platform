@@ -57,7 +57,7 @@ export default function Nav() {
         <nav className="flex items-center gap-1 text-sm">
           <Link
             href="/centers"
-            className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100"
+            className="hidden rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 sm:block"
           >
             Find Childcare
           </Link>
@@ -66,21 +66,21 @@ export default function Nav() {
             <>
               <Link
                 href={dashboardHref}
-                className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100"
+                className="hidden rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 sm:block"
               >
                 Dashboard
               </Link>
               {user?.role === "PARENT" && (
                 <Link
                   href="/live"
-                  className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100"
+                  className="hidden rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 sm:block"
                 >
                   Live view
                 </Link>
               )}
               <Link
                 href="/notifications"
-                className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+                className="relative hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100 sm:block"
                 aria-label="Notifications"
               >
                 <svg

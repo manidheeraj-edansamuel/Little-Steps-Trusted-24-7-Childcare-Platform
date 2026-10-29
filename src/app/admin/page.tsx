@@ -95,7 +95,7 @@ export default function AdminPage() {
       </div>
 
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Stat label="Users" value={stats.totalUsers} sub={`${stats.totalParents} parents · ${stats.totalProviders} providers`} />
           <Stat label="Pending providers" value={stats.pendingProviders} />
           <Stat label="Centers" value={stats.totalCenters} sub={`${stats.pendingCenters} pending`} />
@@ -104,7 +104,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex flex-wrap gap-x-2 border-b border-slate-200">
         <TabButton active={tab === "users"} onClick={() => setTab("users")}>
           Users ({users.length})
         </TabButton>

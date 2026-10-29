@@ -58,7 +58,7 @@ export default function Recommendations() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {centers.map((c) => (
           <div
             key={c.centerId}
@@ -98,7 +98,7 @@ export default function Recommendations() {
       {caregivers.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">Caregivers who fit your child</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {caregivers.map((cg) => (
               <div key={cg.caregiverId} className="rounded-xl border border-slate-200 p-4">
                 <div className="flex items-start justify-between gap-2">

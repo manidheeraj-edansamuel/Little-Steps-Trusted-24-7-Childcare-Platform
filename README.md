@@ -21,7 +21,9 @@ Five of the six roadmap phases are delivered end-to-end:
 5. **AI recommendations** — parent reviews plus an explainable weighted scoring
    engine that ranks centers and caregivers on the dashboard.
 
-Phase 6 (mobile apps / PWA polish) is the remaining stretch item.
+The mobile/PWA pass (Phase 6) is in place too: an installable web manifest,
+generated icons, a service worker that keeps visited pages readable offline,
+and a phone-sized bottom tab bar.
 
 ## Features
 
@@ -68,6 +70,30 @@ penalised ×0.6 when the parent's history shows night care. The top three
 contributing signals are returned as human-readable reasons, so every score is
 auditable. Parents can only review a center after a confirmed booking or an
 active subscription (one review per parent+center, edited in place).
+
+### Installable and offline (PWA)
+
+`src/app/manifest.ts` serves the web manifest; `scripts/make-icons.mjs` renders
+the PNG icon set (any + maskable + `apple-touch-icon`) from `public/icon.svg`:
+
+```bash
+node scripts/make-icons.mjs   # only needed after changing the artwork
+```
+
+`public/sw.js` is registered in production only, so `next dev` hot reload stays
+predictable. Its rules:
+
+- Precaches `/offline.html` and the icons on install.
+- Stale-while-revalidate for `/_next/static/*` and image/font files.
+- Network-first for page navigations, falling back to the cached copy and then
+  to `/offline.html`.
+- **Never** caches anything under `/api/`, so bookings, payments and live feeds
+  can't be served from a stale cache.
+
+On phones the header nav collapses into a fixed bottom tab bar
+(`src/components/MobileTabBar.tsx`) whose tabs follow the signed-in role —
+Find / Live / Home / Alerts for parents, Find / Home / Alerts for providers and
+admins, Find / Log in when signed out.
 
 ### Payments are simulated
 
@@ -132,16 +158,18 @@ All seeded accounts use the password `password123`:
 
 ```
 prisma/            schema.prisma + seed.ts + migrations
+scripts/           make-icons.mjs (renders the PWA icon set)
+public/            icon.svg, offline.html, sw.js, icons/
 src/lib/           prisma client, auth (JWT cookie), api guards, notify, billing,
                    access (enrolment gate for live feeds), recommend* (scoring)
-src/components/    Nav, StatusBadge, CameraPlayer, CenterCameras,
-                   Recommendations, CenterReviews
+src/components/    Nav, MobileTabBar, ServiceWorker, StatusBadge, CameraPlayer,
+                   CenterCameras, Recommendations, CenterReviews
+src/app/           pages: landing, login, register, centers, dashboard, live,
+                   provider, admin, notifications + manifest.ts
 src/app/api/       REST route handlers: auth, centers, centers/[id]/cameras,
                    cameras/[id], live, bookings, subscriptions, notifications,
                    payments (+ /payments/[id]/refund), reviews, recommendations,
                    admin
-src/app/           pages: landing, login, register, centers, dashboard, live,
-                   provider, admin, notifications
 ```
 
 ## Notes
@@ -155,5 +183,5 @@ src/app/           pages: landing, login, register, centers, dashboard, live,
   / `db seed`, which the npm scripts above depend on.
 - CCTV streams in the seed are public test assets (Mux / Apple HLS and a Big
   Buck Bunny MP4), so the live page plays without a real camera behind it.
-- Native mobile apps and the PWA/mobile polish pass (PRD Phase 6) remain the
-  last stretch items.
+- The PWA is installable and reads cached pages offline; native iOS/Android
+  wrappers are still future work.

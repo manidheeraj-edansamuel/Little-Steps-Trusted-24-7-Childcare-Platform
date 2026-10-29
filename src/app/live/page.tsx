@@ -109,7 +109,7 @@ export default function LivePage() {
       )}
 
       {cameras.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {cameras.map((c) => (
             <CameraPlayer key={c.id} camera={c} />
           ))}

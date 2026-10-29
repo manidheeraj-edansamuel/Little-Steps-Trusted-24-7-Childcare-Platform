@@ -188,14 +188,14 @@ export default function ProviderDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Pending requests" value={String(pending.length)} />
         <Stat label="Total bookings" value={String(bookings.length)} />
         <Stat label="Earnings (collected)" value={`₹${collected}`} />
         <Stat label="Monthly recurring" value={`₹${monthlyRecurring}`} />
       </div>
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex flex-wrap gap-x-2 border-b border-slate-200">
         <TabButton active={tab === "bookings"} onClick={() => setTab("bookings")}>
           Booking requests ({bookings.length})
         </TabButton>
@@ -300,7 +300,7 @@ export default function ProviderDashboard() {
                   {msg}
                 </div>
               )}
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Center name">
                   <input
                     required
@@ -452,7 +452,7 @@ export default function ProviderDashboard() {
           {centers.length === 0 ? (
             <Empty text="You haven't listed any centers yet." />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {centers.map((c) => (
                 <div
                   key={c.id}

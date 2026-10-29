@@ -87,7 +87,7 @@ export default function CenterCameras({ centers }: { centers: Option[] }) {
         <select
           value={centerId}
           onChange={(e) => setCenterId(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rose-500"
+          className="max-w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rose-500"
         >
           {centers.map((c) => (
             <option key={c.id} value={c.id}>
@@ -142,7 +142,7 @@ export default function CenterCameras({ centers }: { centers: Option[] }) {
 
       <form
         onSubmit={add}
-        className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2"
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2"
       >
         <input
           required

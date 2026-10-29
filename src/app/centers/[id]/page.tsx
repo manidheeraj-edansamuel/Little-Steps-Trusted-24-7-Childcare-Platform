@@ -167,7 +167,7 @@ export default function CenterDetailPage() {
         ← Back to search
       </Link>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -253,7 +253,7 @@ export default function CenterDetailPage() {
             {center.caregivers.length === 0 ? (
               <p className="mt-2 text-sm text-slate-500">No caregivers listed yet.</p>
             ) : (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {center.caregivers.map((cg) => (
                   <div
                     key={cg.id}
